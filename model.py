@@ -7,11 +7,11 @@ from torch import nn
 class LayerNormalization(nn.Module):
     def __init__(self, 
                  features: int, 
-                 eps:float=10**-6
+                 eps: float=10**-6
                  ) -> None:
         super().__init__()
         self.eps = eps
-        self.alpha = nn.Parameter(torch.ones(features))     # alpha is a learnable parameter
+        self.gain = nn.Parameter(torch.ones(features))     # gain is a learnable parameter
         self.bias = nn.Parameter(torch.zeros(features))     # bias is a learnable parameter
 
     def forward(self, x):
@@ -21,7 +21,7 @@ class LayerNormalization(nn.Module):
         # Keep the dimension for broadcasting
         std = x.std(dim=-1, keepdim=True) # (batch, seq_len, 1)
         # eps is to prevent dividing by zero or when std is very small
-        return (x - mean) / (std + self.eps) * self.alpha + self.bias
+        return (x - mean) / (std + self.eps) * self.gain + self.bias
 
 class FeedForwardBlock(nn.Module):
     def __init__(self,
@@ -225,7 +225,8 @@ class ProjectionLayer(nn.Module):
         return self.proj(x)
     
 class Transformer(nn.Module):
-    def __init__(self, encoder: Encoder,
+    def __init__(self, 
+                 encoder: Encoder,
                  decoder: Decoder, 
                  src_embed: InputEmbeddings,
                  tgt_embed: InputEmbeddings, 
